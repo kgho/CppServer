@@ -92,6 +92,44 @@ namespace common
 		char       IP[16];
 	};
 
+	template<class T>
+	class HashContainer
+	{
+	private:
+		int     m_Count;
+		void* m_Pointer;
+	public:
+		HashContainer()
+		{
+			m_Count = 0;
+			m_Pointer = nullptr;
+		}
+		HashContainer(int counter)
+		{
+			m_Count = 0;
+			if (counter < 1) return;
+			m_Count = counter;
+			m_Pointer = malloc(m_Count * sizeof(T));
+		}
+		virtual ~HashContainer()
+		{
+			if (m_Pointer != nullptr)
+			{
+				free(m_Pointer);
+				m_Pointer = nullptr;
+			}
+		}
+		T* Value(const int index)
+		{
+			T* v = (T*)m_Pointer;
+			return &v[index];
+		}
+		int Count()
+		{
+			return m_Count;
+		}
+	};
+
 	extern char FileExePath[MAX_FILE_LEN];
 	extern ConfigXML* ServerXML;
 	extern ConfigXML* ClientXML;
