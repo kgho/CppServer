@@ -158,10 +158,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\core\IData.cpp" />
+    <ClCompile Include="..\..\public\PublicEntry.cpp" />
+    <ClCompile Include="..\..\public\tinyxml\md5.cpp" />
+    <ClCompile Include="..\..\public\tinyxml\tinystr.cpp" />
+    <ClCompile Include="..\..\public\tinyxml\tinyxml.cpp" />
+    <ClCompile Include="..\..\public\tinyxml\tinyxmlerror.cpp" />
+    <ClCompile Include="..\..\public\tinyxml\tinyxmlparser.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\core\IData.h" />
+    <ClInclude Include="..\..\public\PublicEntry.h" />
+    <ClInclude Include="..\..\public\tinyxml\md5.h" />
+    <ClInclude Include="..\..\public\tinyxml\tinystr.h" />
+    <ClInclude Include="..\..\public\tinyxml\tinyxml.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
