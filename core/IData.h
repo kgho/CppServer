@@ -141,4 +141,82 @@ namespace common
 
 }
 
+namespace tcp
+{
+
+// 单字节类型
+#pragma pack(push,packing)
+#pragma pack(1)
+
+	struct S_CONNECT_INDEX
+	{
+		int index;
+		inline void Reset() { index = -1; }
+	};
+	struct S_BUFFS_BASE
+	{
+		char* buf; //缓冲区
+		int     head;//消费者偏移 头
+		int     tail;//生产者偏移 尾
+		bool    isCompleted;
+	};
+	//服务器连接用户数据结构
+	struct S_CONNECT_BASE
+	{
+		int    index;
+		int    socketfd;
+
+		int8_t    state;
+		int8_t    closeState;
+		char      ip[MAX_IP_LEN];
+		uint16_t  port;
+		uint8_t   xorCode;
+		int32_t   appID;//连接程序的ID
+
+		S_BUFFS_BASE   recvs;
+		S_BUFFS_BASE   sends;
+		int      packageLength;//数据包长度
+
+
+		int32_t  temp_ConnectTime;
+		int32_t  temp_HeartTime;
+		int32_t  temp_CloseTime;
+		int32_t  temp_ShutDown;
+
+		void Init();
+		void Reset();
+
+		inline bool IsEqual(int sid)
+		{
+			if (socketfd == sid) return true;
+			return false;
+		}
+	};
+
+	//客户端-结构体
+	struct S_CLINET_BASE
+	{
+		int              ID;
+		char             ip[MAX_IP_LEN];
+		uint16_t         port;
+		int32_t          appID;
+		uint8_t          state;
+		uint8_t          xorCode;
+
+		S_BUFFS_BASE     recvs;
+		S_BUFFS_BASE     sends;
+		int32_t          packageLength;//消息长度
+		char* temp_buf;
+
+		int32_t          temp_HeartTime;
+		int32_t          temp_AutoConnectTime;
+		int32_t          temp_testtime;
+		void Init(int sid);
+		void Reset();
+	};
+
+#pragma pack(pop, packing)
+
+}
+
 #endif // ____IDATA_H

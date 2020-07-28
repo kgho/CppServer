@@ -1,5 +1,6 @@
 ﻿#include "IData.h"
 #include <string>
+#include <time.h>
 
 #ifdef ____Win32
 #else
@@ -53,3 +54,43 @@ namespace common
 		return common::E_APP_Player;
 	}
 }
+
+namespace tcp
+{
+	void S_CONNECT_BASE::Init()
+	{
+		recvs.buf = new char[common::ServerXML->recvBytesMax];
+		sends.buf = new char[common::ServerXML->sendBytesMax];
+
+		Reset();
+	}
+	void S_CONNECT_BASE::Reset()
+	{
+		socketfd = -1;
+		port = 0;
+		index = -1;
+		xorCode = common::ServerXML->appXorCode;
+
+		recvs.head = 0;
+		recvs.tail = 0;
+		recvs.isCompleted = false;
+		sends.head = 0;
+		sends.tail = 0;
+		sends.isCompleted = true;
+
+		packageLength = 0;
+
+		temp_ConnectTime = (int)time(NULL);
+		temp_HeartTime = (int)time(NULL);
+		temp_CloseTime = (int)time(NULL);
+
+		memset(recvs.buf, 0, common::ServerXML->recvBytesMax);
+		memset(sends.buf, 0, common::ServerXML->sendBytesMax);
+		memset(ip, 0, MAX_IP_LEN);
+
+		closeState = 0;
+		state = common::E_SSS_Free;
+	}
+}
+
+
