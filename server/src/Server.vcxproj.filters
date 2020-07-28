@@ -51,5 +51,11 @@
     <ClInclude Include="..\..\public\PublicEntry.h">
       <Filter>public</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\core\ITcp.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\core\WindowsServer.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

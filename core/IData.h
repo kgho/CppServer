@@ -217,6 +217,11 @@ namespace tcp
 
 #pragma pack(pop, packing)
 
+	class IServer;
+	class IClient;
+	typedef void(*ISERVER_NOTIFY)(IServer* tcp, S_CONNECT_BASE* c, const int code);
+	typedef void(*ICLIENT_NOTIFY)(IClient* tcp, const int code);
+
 }
 
 #endif // ____IDATA_H

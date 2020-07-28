@@ -168,6 +168,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\core\IData.h" />
+    <ClInclude Include="..\..\core\ITcp.h" />
+    <ClInclude Include="..\..\core\WindowsServer.h" />
     <ClInclude Include="..\..\public\PublicEntry.h" />
     <ClInclude Include="..\..\public\tinyxml\md5.h" />
     <ClInclude Include="..\..\public\tinyxml\tinystr.h" />
