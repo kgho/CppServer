@@ -23,6 +23,9 @@
     <ClCompile Include="..\..\public\PublicEntry.cpp">
       <Filter>public</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\WindowsServer_Recycle.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="core">
