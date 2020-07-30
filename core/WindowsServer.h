@@ -71,6 +71,10 @@ namespace tcp
 	public:
 		WindowsServer();
 		virtual ~WindowsServer();
+
+		virtual inline int ConnectCount() { return m_ConnectCount; };
+		virtual inline int SecureCount() { return m_SecurityCount; };
+
 		virtual void StartServer();
 		virtual void StopServer();
 		virtual bool IsCloseClient(const int index, int secure);
@@ -83,6 +87,25 @@ namespace tcp
 		virtual void SetNotify_Secure(ISERVER_NOTIFY e);
 		virtual void SetNotify_DisConnect(ISERVER_NOTIFY e);
 		virtual void SetNotify_Command(ISERVER_NOTIFY e);
+
+	private:
+		//玩家数据
+		common::HashContainer<S_CONNECT_BASE>* m_Onlines;//在线玩家数据
+		common::HashContainer<S_CONNECT_INDEX>* m_OnlinesIndexs;//连接玩家索引数组
+		//通知事件
+		ISERVER_NOTIFY      m_Notify_Accept;
+		ISERVER_NOTIFY      m_Notify_Secure;
+		ISERVER_NOTIFY      m_Notify_Disconnect;
+		ISERVER_NOTIFY      m_Notify_Command;
+		//私有数据
+		int32_t             m_ConnectCount;//当前连接数
+		int32_t             m_SecurityCount;//安全连接数
+		bool                         m_IsRunning;
+		SOCKET                       m_ListenSocket;   //监听套接字句柄
+		HANDLE                       m_Completeport;//完成端口句柄
+		LPFN_ACCEPTEX                m_AcceptEx;//AcceptEx函数地址
+		LPFN_GETACCEPTEXSOCKADDRS    m_GetAcceptEx;//获取客户端信息函数地址
+		std::shared_ptr<std::thread> m_WorkThread[MAX_THREAD_LEN];
 	};
 }
 #endif
