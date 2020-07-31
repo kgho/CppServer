@@ -68,6 +68,9 @@ namespace tcp
 {
 	class WindowsServer : public IServer
 	{
+	private:
+		int   InitSocket();
+
 	public:
 		WindowsServer();
 		virtual ~WindowsServer();
