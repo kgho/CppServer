@@ -162,16 +162,4 @@ namespace tcp
 	void WindowsServer::ReadPackage(const int index, void* v, const int len)
 	{
 	}
-	void WindowsServer::SetNotify_Connect(ISERVER_NOTIFY e)
-	{
-	}
-	void WindowsServer::SetNotify_Secure(ISERVER_NOTIFY e)
-	{
-	}
-	void WindowsServer::SetNotify_DisConnect(ISERVER_NOTIFY e)
-	{
-	}
-	void WindowsServer::SetNotify_Command(ISERVER_NOTIFY e)
-	{
-	}
 }

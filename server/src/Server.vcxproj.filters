@@ -29,6 +29,9 @@
     <ClCompile Include="..\..\core\WindowsServer.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\core\WindowsServer_API.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="core">

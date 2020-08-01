@@ -159,6 +159,7 @@
   <ItemGroup>
     <ClCompile Include="..\..\core\IData.cpp" />
     <ClCompile Include="..\..\core\WindowsServer.cpp" />
+    <ClCompile Include="..\..\core\WindowsServer_API.cpp" />
     <ClCompile Include="..\..\core\WindowsServer_Recycle.cpp" />
     <ClCompile Include="..\..\public\PublicEntry.cpp" />
     <ClCompile Include="..\..\public\tinyxml\md5.cpp" />

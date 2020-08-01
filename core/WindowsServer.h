@@ -71,6 +71,13 @@ namespace tcp
 	private:
 		int   InitSocket();
 
+		S_CONNECT_BASE* FindNoStateData();
+		S_CONNECT_INDEX* FindOnlinesIndex(const int socketfd);
+
+		void ComputeSecureNum(bool isadd);
+		void ComputeConnectNum(bool isadd);
+		inline HANDLE CompletePort() { return m_Completeport; }
+
 	public:
 		WindowsServer();
 		virtual ~WindowsServer();
@@ -86,6 +93,7 @@ namespace tcp
 		virtual void Update();
 		virtual void CreatePackage(const int index, const uint16_t cmd, void* v, const int len);
 		virtual void ReadPackage(const int index, void* v, const int len);
+
 		virtual void SetNotify_Connect(ISERVER_NOTIFY e);
 		virtual void SetNotify_Secure(ISERVER_NOTIFY e);
 		virtual void SetNotify_DisConnect(ISERVER_NOTIFY e);
@@ -100,6 +108,10 @@ namespace tcp
 		ISERVER_NOTIFY      m_Notify_Secure;
 		ISERVER_NOTIFY      m_Notify_Disconnect;
 		ISERVER_NOTIFY      m_Notify_Command;
+		//互斥锁
+		std::mutex          m_Mutex_NoState;
+		std::mutex          m_Mutex_ConnectCount;
+		std::mutex          m_Mutex_SecureCount;
 		//私有数据
 		int32_t             m_ConnectCount;//当前连接数
 		int32_t             m_SecurityCount;//安全连接数
