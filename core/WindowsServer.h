@@ -71,6 +71,10 @@ namespace tcp
 	private:
 		int   InitSocket();
 
+		void  UpdateDisconnect(S_CONNECT_BASE* c);
+		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);
+		void ShutDownSocket(SOCKET s, const int32_t mode, S_CONNECT_BASE* c, int kind);
+
 		S_CONNECT_BASE* FindNoStateData();
 		S_CONNECT_INDEX* FindOnlinesIndex(const int socketfd);
 
@@ -87,9 +91,11 @@ namespace tcp
 
 		virtual void StartServer();
 		virtual void StopServer();
+
 		virtual bool IsCloseClient(const int index, int secure);
 		virtual S_CONNECT_BASE* FindClient(const int socketfd, bool  issecure);
 		virtual S_CONNECT_BASE* FindClient(const int index);
+
 		virtual void Update();
 		virtual void CreatePackage(const int index, const uint16_t cmd, void* v, const int len);
 		virtual void ReadPackage(const int index, void* v, const int len);

@@ -141,25 +141,67 @@ namespace tcp
 	void WindowsServer::StopServer()
 	{
 	}
-	bool WindowsServer::IsCloseClient(const int index, int secure)
-	{
-		return false;
-	}
-	S_CONNECT_BASE* WindowsServer::FindClient(const int socketfd, bool  issecure)
-	{
-		return nullptr;
-	}
-	S_CONNECT_BASE* WindowsServer::FindClient(const int index)
-	{
-		return nullptr;
-	}
-	void WindowsServer::Update()
-	{
-	}
+
 	void WindowsServer::CreatePackage(const int index, const uint16_t cmd, void* v, const int len)
 	{
 	}
 	void WindowsServer::ReadPackage(const int index, void* v, const int len)
 	{
+	}
+
+	int32_t WindowsServer::ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind)
+	{
+		if (socketfd == SOCKET_ERROR || socketfd == INVALID_SOCKET) return  -1;
+		if (c != nullptr)
+		{
+			if (c->state == common::E_SSS_Free) return 0;
+			if (c->state >= common::E_SSS_Secure)
+			{
+				this->ComputeSecureNum(false);
+			}
+		}
+		this->ComputeConnectNum(false);
+		shutdown(socketfd, SD_BOTH);
+		if (socketfd != INVALID_SOCKET)
+		{
+			closesocket(socketfd);
+			socketfd = INVALID_SOCKET;
+		}
+		return 0;
+	}
+
+	void WindowsServer::ShutDownSocket(SOCKET s, const int32_t mode, S_CONNECT_BASE* c, int kind)
+	{
+		if (c != nullptr)
+		{
+			if (c->state == common::E_SSS_Free) return;
+			if (c->closeState == common::E_SSC_ShutDown) return;
+			c->temp_ShutDown = kind;
+			c->temp_CloseTime = (int)time(NULL);
+			c->closeState = common::E_SSC_ShutDown;
+			shutdown(s, SD_BOTH);
+			CancelIoEx((HANDLE)s, nullptr);
+			return;
+		}
+		auto c2 = FindClient(s, true);
+		if (c2 == nullptr)
+		{
+			return;
+		}
+		if (c2->state == common::E_SSS_Free) return;
+		if (c2->closeState == common::E_SSC_ShutDown) return;
+		switch (mode)
+		{
+		case common::E_CT_Recv:
+			c2->recvs.isCompleted = true;
+			break;
+		case common::E_CT_Send:
+			c2->sends.isCompleted = true;
+			break;
+		}
+		c2->temp_ShutDown = kind;
+		c2->temp_CloseTime = (int)time(NULL);
+		c2->closeState = common::E_SSC_ShutDown;
+		shutdown(s, SD_BOTH);
 	}
 }

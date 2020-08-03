@@ -1,6 +1,58 @@
 #include "WindowsServer.h"
 namespace tcp
 {
+	void WindowsServer::Update()
+	{
+		for (int i = 0; i < m_Onlines->Count(); i++)
+		{
+			auto c = m_Onlines->Value(i);
+			if (c->index == -1) continue;
+			if (c->state == common::E_SSS_Free) continue;
+			if (c->state >= common::E_SSS_NeedSave) continue;
+			UpdateDisconnect(c);
+			if (c->closeState == common::E_SSC_ShutDown) continue;
+			//解析指令
+			//发送数据
+		}
+	}
+
+	void WindowsServer::UpdateDisconnect(S_CONNECT_BASE* c)
+	{
+		//1、检查安全关闭
+		int temp = 0;
+		if (c->closeState == common::E_SSC_ShutDown)
+		{
+			temp = (int)time(NULL) - c->temp_CloseTime;
+			if (c->recvs.isCompleted && c->sends.isCompleted)
+			{
+				ReleaseSocket(c->socketfd, c, 1001);
+			}
+			else if (temp > 1)
+			{
+				ReleaseSocket(c->socketfd, c, 1002);
+			}
+			return;
+		}
+		//2、检查安全连接
+		temp = (int)time(NULL) - c->temp_ConnectTime;
+		if (c->state == common::E_SSS_Connect)
+		{
+			// 超过10秒还不是安全连接，踢出
+			if (temp > 10)
+			{
+				ShutDownSocket(c->socketfd, 0, c, 1001);
+				return;
+			}
+		}
+		//3、检查心跳连接
+		temp = (int)time(NULL) - c->temp_HeartTime;
+		if (temp > common::ServerXML->maxHeartTime)
+		{
+			ShutDownSocket(c->socketfd, 0, c, 1002);
+			return;
+		}
+	}
+
 	S_CONNECT_BASE* WindowsServer::FindNoStateData()
 	{
 		std::lock_guard<std::mutex> guard(this->m_Mutex_NoState);
