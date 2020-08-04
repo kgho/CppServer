@@ -70,6 +70,7 @@ namespace tcp
 	{
 	private:
 		int   InitSocket();
+		void InitThread();
 
 		void  UpdateDisconnect(S_CONNECT_BASE* c);
 		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);
@@ -81,6 +82,8 @@ namespace tcp
 		void ComputeSecureNum(bool isadd);
 		void ComputeConnectNum(bool isadd);
 		inline HANDLE CompletePort() { return m_Completeport; }
+
+		static void RunThread(WindowsServer* tcp, int id);
 
 	public:
 		WindowsServer();

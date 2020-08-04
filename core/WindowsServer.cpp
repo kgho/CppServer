@@ -1,4 +1,8 @@
 ﻿#include "WindowsServer.h"
+
+using namespace common;
+using namespace recycle;
+
 namespace tcp
 {
 	IServer* tcp::NewIServer()
@@ -60,6 +64,7 @@ namespace tcp
 		}
 		//4、初始化投递数据
 		//5、开始运行线程
+		InitThread();
 	}
 
 	int WindowsServer::InitSocket()
@@ -203,5 +208,104 @@ namespace tcp
 		c2->temp_CloseTime = (int)time(NULL);
 		c2->closeState = common::E_SSC_ShutDown;
 		shutdown(s, SD_BOTH);
+	}
+
+	//************************************************************************
+//************************************************************************
+//************************************************************************
+//************************************************************************
+//************************************************************************
+//线程
+	void WindowsServer::InitThread()
+	{
+		m_IsRunning = true;
+		if (common::ServerXML->maxThread <= 0) common::ServerXML->maxThread = 1;
+		else if (common::ServerXML->maxThread > MAX_THREAD_LEN)  common::ServerXML->maxThread = MAX_THREAD_LEN;
+		for (int i = 0; i < common::ServerXML->maxThread; i++)
+		{
+			m_WorkThread[i].reset(new  std::thread(WindowsServer::RunThread, this, i));
+		}
+		for (int i = 0; i < common::ServerXML->maxThread; i++)
+			m_WorkThread[i]->detach();
+	}
+
+	void pushContext(RecycleBase* context)
+	{
+		switch (context->m_PostType)
+		{
+		case common::E_CT_Accept:
+			PostAcceptRecycle::Push((PostAcceptRecycle*)context);
+			break;
+		case common::E_CT_Recv:
+			PostRecvRecycle::Push((PostRecvRecycle*)context);
+			break;
+		case common::E_CT_Send:
+			PostSendRecycle::Push((PostSendRecycle*)context);
+			break;
+		}
+	}
+
+	void WindowsServer::RunThread(WindowsServer* tcp, int id)
+	{
+		LOGINFO("RunThread...%d \n", id);
+		ULONG_PTR key = 1;
+		OVERLAPPED* overlapped = nullptr;
+		DWORD recvBytes = 0;
+		while (tcp->m_IsRunning)
+		{
+			bool iscomplete = GetQueuedCompletionStatus(tcp->CompletePort(), &recvBytes, &key, &overlapped, INFINITE);
+			recycle::RecycleBase* context = CONTAINING_RECORD(overlapped, recycle::RecycleBase, m_OverLapped);
+			if (context == nullptr)
+			{
+				if (key == 1) break;
+				else continue;
+			}
+			if (iscomplete == false)
+			{
+				DWORD err = GetLastError();
+				if (WAIT_TIMEOUT == err) continue;
+				if (overlapped != NULL)
+				{
+					tcp->ShutDownSocket(context->m_PostSocket, context->m_PostType, NULL, 2001);
+					pushContext(context);
+					continue;
+				}
+				tcp->ShutDownSocket(context->m_PostSocket, context->m_PostType, NULL, 2002);
+				pushContext(context);
+				continue;
+			}
+			else
+			{
+				if (overlapped == NULL)
+				{
+					LOGINFO("overlapped == NULL \n");
+					break;
+				}
+				if ((iscomplete == true) && (overlapped != NULL))//正常操作
+				{
+					if (key != 0)
+					{
+						LOGINFO("key !=0 \n");
+						continue;
+					}
+					if (recvBytes == 0 && (context->m_PostType == E_CT_Recv || context->m_PostType == E_CT_Send))
+					{
+						tcp->ShutDownSocket(context->m_PostSocket, context->m_PostType, NULL, 2003);
+						pushContext(context);
+						continue;
+					}
+					switch (context->m_PostType)
+					{
+					case common::E_CT_Accept://新的连接
+						break;
+					case common::E_CT_Recv://有新的数据
+						break;
+					case common::E_CT_Send://发送数据成功
+						break;
+					}
+				}
+			}
+		}
+		LOGINFO("exit Thread...%d \n", id);
 	}
 }
