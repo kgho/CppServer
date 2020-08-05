@@ -70,7 +70,12 @@ namespace tcp
 	{
 	private:
 		int   InitSocket();
+		//初始化投递
+		void InitAccept();
 		void InitThread();
+
+		//投递新的连接
+		int Post_Accept();
 
 		void  UpdateDisconnect(S_CONNECT_BASE* c);
 		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);

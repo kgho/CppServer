@@ -154,6 +154,61 @@ namespace tcp
 	{
 	}
 
+	void WindowsServer::InitAccept()
+	{
+		for (int i = 0; i < ServerXML->maxPostAccept; i++)
+		{
+			Post_Accept();
+		}
+	}
+
+	//投递新的连接
+	int WindowsServer::Post_Accept()
+	{
+		SOCKET socketfd = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+		if (socketfd == INVALID_SOCKET) return -1;
+		ULONG ul = 1;
+		int errcode = ioctlsocket(socketfd, FIONBIO, (unsigned long*)&ul);
+		if (errcode == SOCKET_ERROR)
+		{
+			closesocket(socketfd);
+			socketfd = INVALID_SOCKET;
+			return -2;
+		}
+		auto  context = PostAcceptRecycle::Pop();
+		context->m_PostSocket = socketfd;
+		//参数说明
+		//1、监听socket
+		//2、接受连接socket
+		//3、接受缓冲区 a、客户端发来第一组数据 b、server地址 c、client地址
+		//4、0不会等到数据到来直接返回 非0等待数据
+		//5、本地地址大小；长度必须为地址长度 + 16字节
+		//6、远端地址大小；长度必须为地址长度 + 16字节
+		//7、同步方式才有用 我们是异步IO没用，不用管；
+		//8、本次重叠I / O所要用到的重叠结构
+		unsigned long dwBytes = 0;
+		errcode = m_AcceptEx(m_ListenSocket,
+			context->m_PostSocket,
+			context->m_buf,
+			0,
+			sizeof(SOCKADDR_IN) + 16,
+			sizeof(SOCKADDR_IN) + 16,
+			&dwBytes,
+			&context->m_OverLapped);
+		if (errcode == false)
+		{
+			int error = WSAGetLastError();
+			if (ERROR_IO_PENDING != error)
+			{
+				closesocket(socketfd);
+				socketfd = INVALID_SOCKET;
+				PostAcceptRecycle::Push(context);
+				return -3;
+			}
+		}
+		return 0;
+	}
+
 	int32_t WindowsServer::ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind)
 	{
 		if (socketfd == SOCKET_ERROR || socketfd == INVALID_SOCKET) return  -1;
