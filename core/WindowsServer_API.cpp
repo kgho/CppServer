@@ -1,4 +1,4 @@
-#include "WindowsServer.h"
+ï»¿#include "WindowsServer.h"
 namespace tcp
 {
 	void WindowsServer::Update()
@@ -11,14 +11,14 @@ namespace tcp
 			if (c->state >= common::E_SSS_NeedSave) continue;
 			UpdateDisconnect(c);
 			if (c->closeState == common::E_SSC_ShutDown) continue;
-			//½âÎöÖ¸Áî
-			//·¢ËÍÊı¾İ
+			//è§£ææŒ‡ä»¤
+			//å‘é€æ•°æ®
 		}
 	}
 
 	void WindowsServer::UpdateDisconnect(S_CONNECT_BASE* c)
 	{
-		//1¡¢¼ì²é°²È«¹Ø±Õ
+		//1ã€æ£€æŸ¥å®‰å…¨å…³é—­
 		int temp = 0;
 		if (c->closeState == common::E_SSC_ShutDown)
 		{
@@ -33,18 +33,18 @@ namespace tcp
 			}
 			return;
 		}
-		//2¡¢¼ì²é°²È«Á¬½Ó
+		//2ã€æ£€æŸ¥å®‰å…¨è¿æ¥
 		temp = (int)time(NULL) - c->temp_ConnectTime;
 		if (c->state == common::E_SSS_Connect)
 		{
-			// ³¬¹ı10Ãë»¹²»ÊÇ°²È«Á¬½Ó£¬Ìß³ö
+			// è¶…è¿‡10ç§’è¿˜ä¸æ˜¯å®‰å…¨è¿æ¥ï¼Œè¸¢å‡º
 			if (temp > 10)
 			{
 				ShutDownSocket(c->socketfd, 0, c, 1001);
 				return;
 			}
 		}
-		//3¡¢¼ì²éĞÄÌøÁ¬½Ó
+		//3ã€æ£€æŸ¥å¿ƒè·³è¿æ¥
 		temp = (int)time(NULL) - c->temp_HeartTime;
 		if (temp > common::ServerXML->maxHeartTime)
 		{
@@ -77,6 +77,40 @@ namespace tcp
 		if (socketfd < 0 || socketfd >= MAX_SOCKETFD_LEN) return nullptr;
 		auto index = m_OnlinesIndexs->Value(socketfd);
 		return index;
+	}
+
+	//è‡ªå®šä¹‰çš„ç»“æ„ä½“,ç”¨äºTCPæœåŠ¡å™¨
+	typedef struct tcp_keepalive
+	{
+		unsigned long onoff;
+		unsigned long keepalivetime;
+		unsigned long keepaliveinterval;
+	}TCP_KEEPALIVE, * PTCP_KEEPALIVE;
+
+	//ç”¨äºæ£€æµ‹çªç„¶æ–­çº¿,åªé€‚ç”¨äºwindows 2000åå¹³å°
+		   //å³å®¢æˆ·ç«¯ä¹Ÿéœ€è¦win2000ä»¥ä¸Šå¹³å°
+	int WindowsServer::SetWindowsHeart(SOCKET s)
+	{
+		DWORD dwError = 0L, dwBytes = 0;
+		TCP_KEEPALIVE sKA_Settings = { 0 }, sReturned = { 0 };
+		sKA_Settings.onoff = 1;
+		sKA_Settings.keepalivetime = 5500; // Keep Alive in 5.5 sec.
+		sKA_Settings.keepaliveinterval = 1000; // Resend if No-Reply
+		DWORD SIO_KEEPALIVE_VALS = IOC_IN | IOC_VENDOR | 4;
+		dwError = WSAIoctl(s,
+			SIO_KEEPALIVE_VALS,
+			&sKA_Settings, sizeof(sKA_Settings),
+			&sReturned, sizeof(sReturned),
+			&dwBytes,
+			NULL,
+			NULL);
+		if (dwError == SOCKET_ERROR)
+		{
+			dwError = WSAGetLastError();
+			LOGINFO("SetHeartCheck->WSAIoctl()å‘ç”Ÿé”™è¯¯,é”™è¯¯ä»£ç : %ld  \n", dwError);
+			return -1;
+		}
+		return 0;
 	}
 
 	void WindowsServer::ComputeSecureNum(bool isadd)

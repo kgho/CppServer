@@ -209,6 +209,70 @@ namespace tcp
 		return 0;
 	}
 
+	//通知-有新的连接
+	int WindowsServer::Event_Accept(void* context, int tid)
+	{
+		PostAcceptRecycle* acc = (PostAcceptRecycle*)context;
+		if (acc == NULL) return -1;
+		SOCKADDR_IN* ClientAddr = NULL;
+		SOCKADDR_IN* LocalAddr = NULL;
+		int remoteLen = sizeof(SOCKADDR_IN);
+		int localLen = sizeof(SOCKADDR_IN);
+		int errcode = 0;
+		//1、指向传递给AcceptEx函数接收第一块数据的缓冲区
+		//2、缓冲区大小，必须和传递给AccpetEx函数的一致
+		//3、本地地址大小，必须和传递给AccpetEx函数一致
+		//4、远程地址大小，必须和传递给AccpetEx函数一致
+		//5、用来返回连接的本地地址
+		//6、用来返回本地地址的长度
+		//7、用来返回远程地址
+		//8、用来返回远程地址的长度
+		m_GetAcceptEx(acc->m_buf,
+			0,
+			sizeof(SOCKADDR_IN) + 16,
+			sizeof(SOCKADDR_IN) + 16,
+			(LPSOCKADDR*)&LocalAddr,
+			&localLen,
+			(LPSOCKADDR*)&ClientAddr,
+			&remoteLen);
+		setsockopt(acc->m_PostSocket, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char*)&m_ListenSocket, sizeof(m_ListenSocket));
+		//2、设置发送 接收数据缓冲区
+		int recvone = ServerXML->recvBytesOne;
+		int sendone = ServerXML->sendBytesOne;
+		setsockopt(m_ListenSocket, SOL_SOCKET, SO_RCVBUF, (char*)&recvone, sizeof(recvone));
+		setsockopt(m_ListenSocket, SOL_SOCKET, SO_SNDBUF, (char*)&sendone, sizeof(sendone));
+		if (this->SetWindowsHeart(acc->m_PostSocket) < 0) return -2;
+		//绑定完成端口
+		HANDLE hTemp = CreateIoCompletionPort((HANDLE)acc->m_PostSocket, m_Completeport, 0, 0);
+		if (hTemp == NULL) return -3;
+		S_CONNECT_INDEX* cindex = FindOnlinesIndex(acc->m_PostSocket);
+		if (cindex == NULL) return -4;
+		S_CONNECT_BASE* c = FindNoStateData();
+		if (c == NULL)
+		{
+			LOGINFO("server full... \n");
+			return -5;
+		}
+		cindex->index = c->index;
+		memcpy(c->ip, inet_ntoa(ClientAddr->sin_addr), MAX_IP_LEN);
+		c->socketfd = acc->m_PostSocket;
+		c->port = ntohs(ClientAddr->sin_port);
+		c->state = common::E_SSS_Connect;
+		c->temp_ConnectTime = (int)time(NULL);
+		c->temp_HeartTime = (int)time(NULL);
+
+		//投递接收数据
+		ComputeConnectNum(true);
+
+		//给客户端发送一条数据包 异或码
+
+		if (m_Notify_Accept != nullptr) m_Notify_Accept(this, c, 0);
+		PostAcceptRecycle::Push(acc);
+
+		this->Post_Accept();
+		return 0;
+	}
+
 	int32_t WindowsServer::ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind)
 	{
 		if (socketfd == SOCKET_ERROR || socketfd == INVALID_SOCKET) return  -1;
@@ -352,7 +416,19 @@ namespace tcp
 					switch (context->m_PostType)
 					{
 					case common::E_CT_Accept://新的连接
-						break;
+					{
+						auto acc = (PostAcceptRecycle*)context;
+						int err = tcp->Event_Accept(acc, id);
+						if (err != 0)
+						{
+							auto acc = (PostAcceptRecycle*)context;
+							// 放回对象回收池
+							PostAcceptRecycle::Push(acc);
+							// 投递一个新的连接
+							tcp->Post_Accept();
+						}
+					}
+					break;
 					case common::E_CT_Recv://有新的数据
 						break;
 					case common::E_CT_Send://发送数据成功

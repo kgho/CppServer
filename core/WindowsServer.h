@@ -76,6 +76,7 @@ namespace tcp
 
 		//投递新的连接
 		int Post_Accept();
+		int Event_Accept(void* context, int tid);
 
 		void  UpdateDisconnect(S_CONNECT_BASE* c);
 		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);
@@ -84,6 +85,7 @@ namespace tcp
 		S_CONNECT_BASE* FindNoStateData();
 		S_CONNECT_INDEX* FindOnlinesIndex(const int socketfd);
 
+		int  SetWindowsHeart(SOCKET s);
 		void ComputeSecureNum(bool isadd);
 		void ComputeConnectNum(bool isadd);
 		inline HANDLE CompletePort() { return m_Completeport; }
