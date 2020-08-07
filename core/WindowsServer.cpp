@@ -171,8 +171,7 @@ namespace tcp
 		int errcode = ioctlsocket(socketfd, FIONBIO, (unsigned long*)&ul);
 		if (errcode == SOCKET_ERROR)
 		{
-			closesocket(socketfd);
-			socketfd = INVALID_SOCKET;
+			ReleaseSocket(socketfd, NULL, 201);
 			return -2;
 		}
 		auto  context = PostAcceptRecycle::Pop();
@@ -200,8 +199,7 @@ namespace tcp
 			int error = WSAGetLastError();
 			if (ERROR_IO_PENDING != error)
 			{
-				closesocket(socketfd);
-				socketfd = INVALID_SOCKET;
+				ReleaseSocket(socketfd, NULL, 201);
 				PostAcceptRecycle::Push(context);
 				return -3;
 			}
@@ -262,6 +260,14 @@ namespace tcp
 		c->temp_HeartTime = (int)time(NULL);
 
 		//投递接收数据
+		int ret = Post_Recv(c->socketfd);
+		if (ret != 0)
+		{
+			c->Reset();
+			cindex->Reset();
+			return -5;
+		}
+
 		ComputeConnectNum(true);
 
 		//给客户端发送一条数据包 异或码
@@ -270,6 +276,40 @@ namespace tcp
 		PostAcceptRecycle::Push(acc);
 
 		this->Post_Accept();
+		return 0;
+	}
+
+	//投递接收数据
+	int WindowsServer::Post_Recv(SOCKET s)
+	{
+		PostRecvRecycle* context = PostRecvRecycle::Pop();
+		context->m_PostSocket = s;
+		unsigned long bytes = 0;
+		unsigned long flag = 0;
+		//1、 操作的套接字
+		//2、 接收缓冲区
+		//3、 wsaBuf数组中WSABUF结构的数目
+		//4、 如果接收操作立即完成,返回函数调用所接收到的字节数
+		//5、 用来控制套接字的行为 一般设置为0
+		//6、 重叠结构
+		//7、 一个指向接收操作结束后调用的例程的指针
+		int err = WSARecv(context->m_PostSocket,
+			&context->m_wsaBuf,
+			1,
+			&bytes,
+			&flag,
+			&context->m_OverLapped,
+			NULL);
+		if (SOCKET_ERROR == err)
+		{
+			int error = WSAGetLastError();
+			if (error != WSA_IO_PENDING)
+			{
+				PostRecvRecycle::Push(context);
+				return -1;
+			}
+		}
+
 		return 0;
 	}
 
@@ -284,13 +324,29 @@ namespace tcp
 				this->ComputeSecureNum(false);
 			}
 		}
-		this->ComputeConnectNum(false);
-		shutdown(socketfd, SD_BOTH);
-		if (socketfd != INVALID_SOCKET)
+
+		switch (kind)
 		{
-			closesocket(socketfd);
-			socketfd = INVALID_SOCKET;
+		case 101:
+			if (socketfd != INVALID_SOCKET)
+			{
+				closesocket(socketfd);
+				socketfd = INVALID_SOCKET;
+			}
+			break;
+		default:
+			this->ComputeConnectNum(false);
+			shutdown(socketfd, SD_BOTH);
+			if (socketfd != INVALID_SOCKET)
+			{
+				closesocket(socketfd);
+				socketfd = INVALID_SOCKET;
+			}
+			break;
 		}
+
+		if (m_Notify_Disconnect != nullptr) this->m_Notify_Disconnect(this, c, kind);
+
 		return 0;
 	}
 
@@ -421,7 +477,7 @@ namespace tcp
 						int err = tcp->Event_Accept(acc, id);
 						if (err != 0)
 						{
-							auto acc = (PostAcceptRecycle*)context;
+							tcp->ReleaseSocket(acc->m_PostSocket, NULL, 101);
 							// 放回对象回收池
 							PostAcceptRecycle::Push(acc);
 							// 投递一个新的连接

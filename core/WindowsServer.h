@@ -77,6 +77,7 @@ namespace tcp
 		//投递新的连接
 		int Post_Accept();
 		int Event_Accept(void* context, int tid);
+		int Post_Recv(SOCKET s);
 
 		void  UpdateDisconnect(S_CONNECT_BASE* c);
 		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);
