@@ -313,6 +313,51 @@ namespace tcp
 		return 0;
 	}
 
+	//收到通知 新的数据到来
+	int WindowsServer::Event_Recv(void* context, int recvBytes, int tid)
+	{
+		PostRecvRecycle* rece = (PostRecvRecycle*)context;
+		if (rece == NULL) return -1;
+
+		auto c = FindClient((int)rece->m_PostSocket, true);
+		if (c == NULL)
+		{
+			ShutDownSocket(rece->m_PostSocket, 0, NULL, 3001);
+			PostRecvRecycle::Push(rece);
+			return -2;
+		}
+
+		if (c->recvs.head == c->recvs.tail)
+		{
+			c->recvs.tail = 0;
+			c->recvs.head = 0;
+		}
+
+		if (c->recvs.tail + recvBytes >= ServerXML->recvBytesMax)
+		{
+			c->recvs.isCompleted = true;
+			ShutDownSocket(rece->m_PostSocket, 0, NULL, 3002);
+			PostRecvRecycle::Push(rece);
+			return -2;
+		}
+
+		memcpy(&c->recvs.buf[c->recvs.tail], rece->m_wsaBuf.buf, recvBytes);
+		c->recvs.tail += recvBytes;
+
+		int ret = Post_Recv(rece->m_PostSocket);
+		if (ret < 0)
+		{
+			c->recvs.isCompleted = true;
+			ShutDownSocket(rece->m_PostSocket, 0, NULL, 3003);
+			PostRecvRecycle::Push(rece);
+			return -2;
+		}
+
+		c->recvs.isCompleted = true;
+		PostRecvRecycle::Push(rece);
+		return 0;
+	}
+
 	int32_t WindowsServer::ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind)
 	{
 		if (socketfd == SOCKET_ERROR || socketfd == INVALID_SOCKET) return  -1;
@@ -328,6 +373,8 @@ namespace tcp
 		switch (kind)
 		{
 		case 101:
+		case 201:
+		case 202:
 			if (socketfd != INVALID_SOCKET)
 			{
 				closesocket(socketfd);
@@ -486,6 +533,7 @@ namespace tcp
 					}
 					break;
 					case common::E_CT_Recv://有新的数据
+						tcp->Event_Recv(context, (int)recvBytes, id);
 						break;
 					case common::E_CT_Send://发送数据成功
 						break;
