@@ -358,6 +358,50 @@ namespace tcp
 		return 0;
 	}
 
+	//投递发送数据
+	int WindowsServer::Post_Send(S_CONNECT_BASE* c)
+	{
+		if (!c->sends.isCompleted) return -1;
+		if (c->index < 0 || c->state == E_SSS_Free || c->closeState == E_SSC_ShutDown || c->socketfd == INVALID_SOCKET) return -2;
+
+		if (c->sends.tail <= c->sends.head) return 0;
+
+		int sendBytes = c->sends.tail - c->sends.head;
+		if (sendBytes > ServerXML->sendBytesOne) sendBytes = ServerXML->sendBytesOne;
+		c->sends.isCompleted = false;
+
+		PostSendRecycle* context = PostSendRecycle::Pop();
+		context->SetPostSend(c->socketfd, &c->sends.buf[c->sends.head], sendBytes);
+		//1、 操作的套接字
+		//2、 接收缓冲区
+		//3、 wsaBuf数组中WSABUF结构的数目
+		//4、 如果接收操作立即完成,返回函数调用所接收到的字节数
+		//5、 用来控制套接字的行为 一般设置为0
+		//6、 重叠结构
+		//7、 一个指向接收操作结束后调用的例程的指针
+
+		unsigned long dwBytes = 0;
+		int err = WSASend(context->m_PostSocket,
+			&context->m_wsaBuf,
+			1,
+			&dwBytes,
+			0,
+			&context->m_OverLapped,
+			NULL);
+		if (err == SOCKET_ERROR)
+		{
+			int error = WSAGetLastError();
+			if (error != WSA_IO_PENDING)
+			{
+				ShutDownSocket(context->m_PostSocket, 0, NULL, 4001);
+				PostSendRecycle::Push(context);
+				return -3;
+			}
+		}
+
+		return 0;
+	}
+
 	int32_t WindowsServer::ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind)
 	{
 		if (socketfd == SOCKET_ERROR || socketfd == INVALID_SOCKET) return  -1;

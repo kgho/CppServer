@@ -13,6 +13,7 @@ namespace tcp
 			if (c->closeState == common::E_SSC_ShutDown) continue;
 			//解析指令
 			//发送数据
+			this->Post_Send(c);
 		}
 	}
 

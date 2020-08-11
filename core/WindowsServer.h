@@ -79,6 +79,7 @@ namespace tcp
 		int Event_Accept(void* context, int tid);
 		int Post_Recv(SOCKET s);
 		int Event_Recv(void* context, int recvBytes, int tid);
+		int Post_Send(S_CONNECT_BASE* c);
 
 		void  UpdateDisconnect(S_CONNECT_BASE* c);
 		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);
