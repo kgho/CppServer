@@ -402,6 +402,41 @@ namespace tcp
 		return 0;
 	}
 
+	//完成端口通知 发送数据成功
+	int WindowsServer::Event_Send(void* context, int sendBytes, int tid)
+	{
+		PostSendRecycle* sc = (PostSendRecycle*)context;
+		if (sc == NULL) return -1;
+
+		if (sc->m_wsaBuf.len != sendBytes)
+		{
+			ShutDownSocket(sc->m_PostSocket, 0, NULL, 4002);
+			PostSendRecycle::Push(sc);
+			return -1;
+		}
+
+		auto c = FindClient(sc->m_PostSocket, true);
+		if (c == NULL)
+		{
+			ShutDownSocket(sc->m_PostSocket, 0, NULL, 4003);
+			PostSendRecycle::Push(sc);
+			return -1;
+		}
+
+		if (c->index < 0 || c->state == E_SSS_Free || c->closeState == E_SSC_ShutDown || c->socketfd == INVALID_SOCKET)
+		{
+			c->sends.isCompleted = true;
+			PostSendRecycle::Push(sc);
+			return -2;
+		}
+
+		//发送成功
+		c->sends.head += sendBytes;
+		c->sends.isCompleted = true;
+		PostSendRecycle::Push(sc);
+		return 0;
+	}
+
 	int32_t WindowsServer::ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind)
 	{
 		if (socketfd == SOCKET_ERROR || socketfd == INVALID_SOCKET) return  -1;
@@ -580,6 +615,7 @@ namespace tcp
 						tcp->Event_Recv(context, (int)recvBytes, id);
 						break;
 					case common::E_CT_Send://发送数据成功
+						tcp->Event_Send(context, (int)recvBytes, id);
 						break;
 					}
 				}
