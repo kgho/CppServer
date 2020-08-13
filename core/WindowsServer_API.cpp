@@ -173,6 +173,56 @@ namespace tcp
 		return c;
 	}
 
+	void WindowsServer::CreatePackage(const int index, const uint16_t cmd, void* v, const int len)
+	{
+		auto c = FindClient(index);
+		if (c == nullptr) return;
+
+		if (c->state <= 0 ||
+			c->socketfd == INVALID_SOCKET ||
+			c->sends.tail + 8 + len >= common::ServerXML->sendBytesMax)
+		{
+			ShutDownSocket(c->socketfd, 0, c, 5001);
+			return;
+		}
+		if (c->sends.head == c->sends.tail)
+		{
+			c->sends.tail = 0;
+			c->sends.head = 0;
+		}
+
+		int tail = c->sends.tail;
+
+		//1、设置头
+		c->sends.buf[tail + 0] = common::ServerXML->Head[0] ^ c->xorCode;
+		c->sends.buf[tail + 1] = common::ServerXML->Head[1] ^ c->xorCode;
+		//2、设置数据包长度
+		uint32_t length = (8 + len) ^ c->xorCode;
+		char* p = (char*)&length;
+		for (int i = 0; i < 4; i++)  c->sends.buf[tail + 2 + i] = p[i];
+		p = NULL;
+		//3、设置头指令
+		uint16_t newcmd = cmd ^ c->xorCode;
+		p = (char*)&newcmd;
+		for (int i = 0; i < 2; i++)  c->sends.buf[tail + 6 + i] = p[i];
+		tail += 8;
+
+		if (len > 0 && v != NULL)
+		{
+			memcpy(&c->sends.buf[tail], v, len);
+			tail += len;
+		}
+
+
+		c->sends.tail = tail;
+	}
+
+	//解包消息体
+	void WindowsServer::ReadPackage(const int index, void* v, const int len)
+	{
+
+	}
+
 	void WindowsServer::SetNotify_Connect(ISERVER_NOTIFY e)
 	{
 		m_Notify_Accept = e;

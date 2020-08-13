@@ -147,12 +147,7 @@ namespace tcp
 	{
 	}
 
-	void WindowsServer::CreatePackage(const int index, const uint16_t cmd, void* v, const int len)
-	{
-	}
-	void WindowsServer::ReadPackage(const int index, void* v, const int len)
-	{
-	}
+	
 
 	void WindowsServer::InitAccept()
 	{
