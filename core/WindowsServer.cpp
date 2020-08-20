@@ -266,6 +266,12 @@ namespace tcp
 		ComputeConnectNum(true);
 
 		//给客户端发送一条数据包 异或码
+		srand(time(NULL));
+		uint8_t value = rand() % 125 + 1;
+		S_CMD_XOR  code;
+		code.xorCode = value ^ c->xorCode;
+		CreatePackage(c->index, CMD_XOR, &code, sizeof(S_CMD_XOR));
+		c->xorCode = value;
 
 		if (m_Notify_Accept != nullptr) m_Notify_Accept(this, c, 0);
 		PostAcceptRecycle::Push(acc);

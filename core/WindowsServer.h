@@ -82,6 +82,11 @@ namespace tcp
 		int Post_Send(S_CONNECT_BASE* c);
 		int Event_Send(void* context, int sendBytes, int tid);
 
+		// 解析消息头
+		void  ReadPackage_Head(S_CONNECT_BASE* c);
+		//解析消息指令
+		void  ReadPackage_Command(S_CONNECT_BASE* c, uint16_t cmd);
+
 		void  UpdateDisconnect(S_CONNECT_BASE* c);
 		int32_t ReleaseSocket(SOCKET socketfd, S_CONNECT_BASE* c, int kind);
 		void ShutDownSocket(SOCKET s, const int32_t mode, S_CONNECT_BASE* c, int kind);

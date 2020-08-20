@@ -173,6 +173,107 @@ namespace tcp
 		return c;
 	}
 
+	//解析消息头
+	void WindowsServer::ReadPackage_Head(S_CONNECT_BASE* c)
+	{
+		if (!c->recvs.isCompleted) return;
+		for (int i = 0; i < 1000; i++)
+		{
+			// 差值大于等于8才有数据，因为一条数据时8个字节
+			int len = c->recvs.tail - c->recvs.head;
+			if (len < 8) break;
+			char head[2];
+			head[0] = c->recvs.buf[c->recvs.head] ^ c->xorCode;
+			head[1] = c->recvs.buf[c->recvs.head + 1] ^ c->xorCode;
+			if (head[0] != common::ServerXML->Head[0] || head[1] != common::ServerXML->Head[1])
+			{
+				// 非法连接
+				ShutDownSocket(c->socketfd, 0, c, 6001);
+				return;
+			}
+			uint32_t  length = (*(uint32_t*)(c->recvs.buf + c->recvs.head + 2)) ^ c->xorCode;
+			uint16_t  cmd = (*(uint16_t*)(c->recvs.buf + c->recvs.head + 6)) ^ c->xorCode;
+			// 验证数据包长度
+			if (c->recvs.tail < c->recvs.head + length) break;
+			c->packageLength = length;
+			ReadPackage_Command(c, cmd);
+			if (c->state < common::E_SSS_Connect)
+			{
+				return;
+			}
+			//解析成功 偏移length
+			c->recvs.head += length;
+		}
+	}
+
+	void WindowsServer::ReadPackage_Command(S_CONNECT_BASE* c, uint16_t cmd)
+	{
+		// 更新 hearTime
+		c->temp_HeartTime = (int)time(NULL);
+		if (cmd < 65000)
+		{
+			if (this->m_Notify_Command != nullptr) m_Notify_Command(this, c, cmd);
+			return;
+		}
+		switch (cmd)
+		{
+		case CMD_HEART:
+			CreatePackage(c->index, CMD_HEART, NULL, 0);
+			break;
+		case CMD_SECURITY: //安全连接
+		{
+			char md5[MAX_MD5_LEN];
+			char a[20];
+			sprintf_s(a, "%s_%d", common::ServerXML->SecureCode, c->xorCode);
+			memset(md5, 0, MAX_MD5_LEN);
+			if (common::MD5_FunPoint != NULL) common::MD5_FunPoint(md5, (unsigned char*)a, strlen(a));
+			S_CMD_SECURE secure;
+			memset(&secure, 0, sizeof(S_CMD_SECURE));
+			ReadPackage(c->index, &secure, sizeof(S_CMD_SECURE));
+			if (secure.appVersion != common::ServerXML->appVersion)
+			{
+				S_CMD_RESULT  kind;
+				kind.type = 1;
+				CreatePackage(c->index, CMD_SECURITY, &kind, sizeof(S_CMD_RESULT));
+				return;
+			}
+			int error = stricmp(md5, secure.appMD5);
+			if (error != 0)
+			{
+				S_CMD_RESULT  kind;
+				kind.type = 2;
+				CreatePackage(c->index, CMD_SECURITY, &kind, sizeof(S_CMD_RESULT));
+				return;
+			}
+			c->appID = secure.appID;
+			c->state = common::E_SSS_Secure;
+			S_CMD_RESULT  kind;
+			kind.type = 0;
+			CreatePackage(c->index, CMD_SECURITY, &kind, sizeof(S_CMD_RESULT));
+			this->ComputeSecureNum(true);
+			if (m_Notify_Secure != NULL) m_Notify_Secure(this, c, 0);
+		}
+		}
+	}
+
+	//解包消息体
+	void WindowsServer::ReadPackage(const int index, void* v, const int len)
+	{
+		auto c = FindClient(index);
+		if (c == nullptr) return;
+		uint32_t temp_head = c->recvs.head + 8;
+		uint32_t temp_tail = c->recvs.head + c->packageLength;
+		if (c->index == -1 ||
+			c->state <= 0 ||
+			c->recvs.buf == nullptr ||
+			temp_head + len >= common::ServerXML->recvBytesMax ||
+			temp_head + len > temp_tail)
+		{
+			return;
+		}
+		memcpy(v, &c->recvs.buf[temp_head], len);
+	}
+
 	void WindowsServer::CreatePackage(const int index, const uint16_t cmd, void* v, const int len)
 	{
 		auto c = FindClient(index);
@@ -215,12 +316,6 @@ namespace tcp
 
 
 		c->sends.tail = tail;
-	}
-
-	//解包消息体
-	void WindowsServer::ReadPackage(const int index, void* v, const int len)
-	{
-
 	}
 
 	void WindowsServer::SetNotify_Connect(ISERVER_NOTIFY e)

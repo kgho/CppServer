@@ -16,6 +16,28 @@
 #define MAX_THREAD_LEN      5
 #define MAX_IP_LEN          20 
 
+#define CMD_HEART     65000
+#define CMD_XOR       65531
+#define CMD_SECURITY  65532
+
+//CMD_XOR
+struct S_CMD_XOR
+{
+	uint8_t  xorCode;
+};
+//CMD_SECURE
+struct S_CMD_SECURE
+{
+	uint32_t  appID;
+	uint32_t  appVersion;
+	char      appMD5[MAX_MD5_LEN];
+};
+//通用
+struct S_CMD_RESULT
+{
+	int32_t    type;
+};
+
 namespace common
 {
 	enum E_CONTEXT_TYPE
