@@ -63,6 +63,7 @@ namespace tcp
 			return;
 		}
 		//4、初始化投递数据
+		InitAccept();
 		//5、开始运行线程
 		InitThread();
 	}
@@ -147,7 +148,7 @@ namespace tcp
 	{
 	}
 
-	
+
 
 	void WindowsServer::InitAccept()
 	{

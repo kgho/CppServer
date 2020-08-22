@@ -32,6 +32,12 @@
     <ClCompile Include="..\..\core\WindowsServer_API.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="GameManager.cpp">
+      <Filter>game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCommand.cpp">
+      <Filter>game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="core">
@@ -42,6 +48,9 @@
     </Filter>
     <Filter Include="public\xml">
       <UniqueIdentifier>{da93a535-0db1-4481-83ab-083d768bc66d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="game">
+      <UniqueIdentifier>{f1249c47-6037-4251-a2e3-b4b40f97619f}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -65,6 +74,12 @@
     </ClInclude>
     <ClInclude Include="..\..\core\WindowsServer.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="GameManager.h">
+      <Filter>game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameCommand.h">
+      <Filter>game</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

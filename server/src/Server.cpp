@@ -2,17 +2,18 @@
 //
 
 #include <iostream>
+#include "GameManager.h"
 #include "PublicEntry.h"
 #include "IData.h"
 #include <time.h>
 
 int main()
 {
-	std::cout << "Hello World!\n";
-	//common::InitPath();
+    std::cout << "Hello World!\n";
+    //common::InitPath();
+    /*entry::Init();
+    Sleep(100000);*/
 
-	entry::Init();
-
-	Sleep(100000);
+    app::StartApp();
 }
 
