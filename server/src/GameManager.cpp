@@ -1,8 +1,32 @@
-#include "GameManager.h"
+﻿#include "GameManager.h"
 #include "GameCommand.h"
 #include "PublicEntry.h"
+
+#include <time.h>
+
+#ifndef  ____Win32
+#include <string.h>
+#include <unistd.h>
+#endif
+
 namespace app
 {
+	int temp_time = 0;
+	char printfstr[1000];
+	//打印信息
+	void printInfo()
+	{
+#ifdef  ____Win32
+		int tempTime = (int)time(NULL) - temp_time;
+		if (tempTime < 1) return;
+		temp_time = (int)time(NULL);
+		int concount = __IServer->ConnectCount();
+		int securtiycount = __IServer->SecureCount();
+		sprintf(printfstr, "连接用户:%d  安全连接:%d", concount, securtiycount);
+		SetWindowTextA(GetConsoleWindow(), printfstr);
+#endif //  ____WIN32_
+	}
+
 	void Init()
 	{
 		__IServer = tcp::NewIServer();
@@ -15,6 +39,7 @@ namespace app
 	void Update()
 	{
 		__IServer->Update();
+		printInfo();
 	}
 	int StartApp()
 	{
