@@ -161,12 +161,13 @@ namespace common
 	extern void(*MD5_FunPoint)(char* output, unsigned char* input, int len);
 	extern void InitPath();
 
+	extern void SetConsoleColor(uint16_t index);
 }
 
 namespace tcp
 {
 
-// 单字节类型
+	// 单字节类型
 #pragma pack(push,packing)
 #pragma pack(1)
 
