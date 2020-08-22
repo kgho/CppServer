@@ -247,4 +247,21 @@ namespace tcp
 
 }
 
+namespace app
+{
+	class IGameBase
+	{
+	public:
+		IGameBase() {}
+		virtual ~IGameBase() {}
+		virtual void  Init() {}
+		virtual void  Update() {}
+		// 收到客户端指令
+		virtual bool  ServerCommand(tcp::IServer* ts, tcp::S_CONNECT_BASE* c, const uint16_t cmd) { return false; }
+		// 收到服务器指令
+		virtual bool  ClientCommand(tcp::IClient* tc, const uint16_t cmd) { return false; }
+		virtual bool  OnDBCommand(void* buff) { return false; }
+	};
+}
+
 #endif // ____IDATA_H

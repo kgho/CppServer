@@ -38,6 +38,9 @@
     <ClCompile Include="GameCommand.cpp">
       <Filter>game</Filter>
     </ClCompile>
+    <ClCompile Include="GamePlayer.cpp">
+      <Filter>game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="core">
@@ -79,6 +82,12 @@
       <Filter>game</Filter>
     </ClInclude>
     <ClInclude Include="GameCommand.h">
+      <Filter>game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameData.h">
+      <Filter>game</Filter>
+    </ClInclude>
+    <ClInclude Include="GamePlayer.h">
       <Filter>game</Filter>
     </ClInclude>
   </ItemGroup>

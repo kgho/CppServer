@@ -1,4 +1,7 @@
 ﻿#include "GameCommand.h"
+#include "PublicEntry.h"
+#include "GamePlayer.h"
+
 namespace app
 {
 	tcp::IServer* __IServer = nullptr;
@@ -48,7 +51,10 @@ namespace app
 		}
 		switch (cmd)
 		{
-		case 1000:
+		case CMD_LOGIN:
+		case CMD_MOVE:
+		case CMD_PLAYERDATA:
+			__Player->ServerCommand(tcp, c, cmd);
 			break;
 		}
 	}

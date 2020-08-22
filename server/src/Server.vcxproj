@@ -169,6 +169,7 @@
     <ClCompile Include="..\..\public\tinyxml\tinyxmlparser.cpp" />
     <ClCompile Include="GameCommand.cpp" />
     <ClCompile Include="GameManager.cpp" />
+    <ClCompile Include="GamePlayer.cpp" />
     <ClCompile Include="Server.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -180,7 +181,9 @@
     <ClInclude Include="..\..\public\tinyxml\tinystr.h" />
     <ClInclude Include="..\..\public\tinyxml\tinyxml.h" />
     <ClInclude Include="GameCommand.h" />
+    <ClInclude Include="GameData.h" />
     <ClInclude Include="GameManager.h" />
+    <ClInclude Include="GamePlayer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,6 +1,7 @@
 ﻿#include "GameManager.h"
 #include "GameCommand.h"
 #include "PublicEntry.h"
+#include "GamePlayer.h"
 
 #include <time.h>
 
@@ -35,6 +36,9 @@ namespace app
 		__IServer->SetNotify_DisConnect(Event_Server_Disconnect);
 		__IServer->SetNotify_Command(Event_Server_Command);
 		__IServer->StartServer();
+
+		// 通过基类指针，调用子类方法，调用统一的方法
+		__Player = new GamePlayer();
 	}
 	void Update()
 	{
