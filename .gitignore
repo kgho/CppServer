@@ -33,4 +33,5 @@
 
 *.vs
 *Debug
-*exe
+server/exe/Server.ilk
+server/exe/Server.pdb
