@@ -7,6 +7,7 @@
 #ifdef ____Win32
 #include <winsock2.h>
 #else
+#include  "malloc.h"
 #endif
 
 #define LOGINFO             printf
