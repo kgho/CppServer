@@ -1,4 +1,6 @@
 ﻿#include "WindowsServer.h"
+#include <iostream>
+
 namespace tcp
 {
 	void WindowsServer::Update()
@@ -12,6 +14,7 @@ namespace tcp
 			UpdateDisconnect(c);
 			if (c->closeState == common::E_SSC_ShutDown) continue;
 			//解析指令
+			ReadPackage_Head(c);
 			//发送数据
 			this->Post_Send(c);
 		}
